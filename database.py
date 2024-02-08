@@ -1,15 +1,15 @@
-from flask_sqlalchemy  import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
-db = SQLAlchemy()
+my_db = SQLAlchemy()
 
-class Metadata(db.Model):
+class Metadata(my_db.Model):
     __tablename__ = 'metadata'
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), nullable=False)
-    file_hash = db.Column(db.String(50), nullable=False)
-    date = db.Column(db.DateTime, default=datetime.utcnow)
+    id = my_db.Column(my_db.Integer, primary_key=True)
+    username = my_db.Column(my_db.String(50), nullable=False)
+    file_hash = my_db.Column(my_db.String(50), nullable=False)
+    date = my_db.Column(my_db.DateTime, default=datetime.utcnow)
 
     def __init__(self, username, file_hash):
         self.username = username
@@ -18,19 +18,34 @@ class Metadata(db.Model):
     def __repr__(self) -> str:
         return 'Metadata %r' % self.id
 
-def upload_metadata(metadata):
-    db.session.add(metadata)
-    db.session.commit()
+class MetadataDB:
+    """ Класс для работы с базой данных """
+    def __init__(self, db, app) -> None:
+        self.db = db
+        self.init_app(app)
+
+    def init_app(self, app):
+        self.db.init_app(app)
     
-def delete_metadata(metadata):
-    result = db.session.query(Metadata).filter(Metadata.file_hash == metadata.file_hash, \
-                                                    Metadata.username == metadata.username).first()
-    db.session.delete(result)
-    db.session.commit()
+    def create_all(self):
+        self.db.create_all()
+
+    def drop_all(self):
+        self.db.drop_all()
+
+    def upload_metadata(self, metadata):
+        self.db.session.add(metadata)
+        self.db.session.commit()
     
-def get_users_by_hash(file_hash):
-    result = db.session.query(Metadata).filter(Metadata.file_hash == file_hash).all()
-    if result:
-        return [data.username for data in result]
-    else:
-        return None
+    def delete_metadata(self, metadata):
+        result = self.db.session.query(Metadata).filter(Metadata.file_hash == metadata.file_hash, \
+                                                        Metadata.username == metadata.username).first()
+        self.db.session.delete(result)
+        self.db.session.commit()
+        
+    def get_users_by_hash(self, file_hash):
+        result = self.db.session.query(Metadata).filter(Metadata.file_hash == file_hash).all()
+        if result:
+            return [data.username for data in result]
+        else:
+            return None

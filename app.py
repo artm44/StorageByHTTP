@@ -4,11 +4,11 @@ import os
 from datetime import datetime
 from file_utils import *
 from auth_utils import auth
-from database import db, Metadata, upload_metadata, delete_metadata, get_users_by_hash
+from database import Metadata, MetadataDB, my_db
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///metadata.db'
-db.init_app(app)
+db = MetadataDB(my_db, app)
 
 UPLOAD_FOLDER = 'store'
 
@@ -37,14 +37,14 @@ def upload_file():
         file.save(file_path)
 
         try:
-            upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash))
+            db.upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash))
         except:
             os.remove(file_path)
             return jsonify({'error': 'An error occurred while adding the file'})
     else:
-        if not auth.current_user() in get_users_by_hash(file_hash):
+        if not auth.current_user() in db.get_users_by_hash(file_hash):
             try:
-                upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash))
+                db.upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash))
             except:
                 return jsonify({'error': 'An error occurred while adding the file'})
 
@@ -58,11 +58,11 @@ def delete_file():
                                                   hash_to_delete[:2]), hash_to_delete)
     
     if not file_path is None:
-        users = get_users_by_hash(hash_to_delete)
+        users = db.get_users_by_hash(hash_to_delete)
         print(users)
         if  auth.current_user() in users:
             try:
-                delete_metadata(Metadata(username=auth.current_user(), file_hash=hash_to_delete))
+                db.delete_metadata(Metadata(username=auth.current_user(), file_hash=hash_to_delete))
                 if len(users) == 1:
                     os.remove(file_path)
                 return jsonify({'message': 'File deleted successfully'})
