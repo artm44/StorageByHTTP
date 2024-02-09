@@ -4,12 +4,13 @@ from datetime import datetime
 my_db = SQLAlchemy()
 
 class Metadata(my_db.Model):
+    """ Модель записи о метаданных файла """
     __tablename__ = 'metadata'
 
     id = my_db.Column(my_db.Integer, primary_key=True)
-    username = my_db.Column(my_db.String(50), nullable=False)
-    file_hash = my_db.Column(my_db.String(50), nullable=False)
-    date = my_db.Column(my_db.DateTime, default=datetime.utcnow)
+    username = my_db.Column(my_db.String(50), nullable=False) # Владелец файла
+    file_hash = my_db.Column(my_db.String(50), nullable=False) # Хэш файла
+    date = my_db.Column(my_db.DateTime, default=datetime.utcnow) # Дата добавления файла
 
     def __init__(self, username, file_hash):
         self.username = username
@@ -44,6 +45,7 @@ class MetadataDB:
         self.db.session.commit()
         
     def get_users_by_hash(self, file_hash):
+        """ Метод возвращающий всех пользователей, у которые являются владельцами файла """
         result = self.db.session.query(Metadata).filter(Metadata.file_hash == file_hash).all()
         if result:
             return [data.username for data in result]

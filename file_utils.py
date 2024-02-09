@@ -19,14 +19,16 @@ def allowed_file(filename) -> bool:
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def find_file_by_prefix(directory, prefix):
+def find_file_by_prefix(directory, prefix) -> str:
+    """ Функция поиска файла по хэшу """
     if not os.path.isdir(directory):
         return None
     for filename in os.listdir(directory):
         if filename.startswith(prefix) and os.path.isfile(os.path.join(directory, filename)):
             return os.path.join(directory, filename)
         
-def exist_file_by_prefix(directory, prefix):
+def exist_file_by_prefix(directory, prefix) -> bool:
+    """ Функция проверки существования файла по хэшу """
     if find_file_by_prefix(directory, prefix) is None: return False
     else: return True
 

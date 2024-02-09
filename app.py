@@ -1,7 +1,5 @@
 from flask import Flask, request, send_from_directory, jsonify
-from flask_sqlalchemy import SQLAlchemy
 import os
-from datetime import datetime
 from file_utils import *
 from auth_utils import auth
 from database import Metadata, MetadataDB, my_db
@@ -26,10 +24,12 @@ def upload_file():
     if not allowed_file(file.filename):
         return jsonify({'error': 'Bad file extension'})
 
-    extension = file.filename[file.filename.rfind('.'):]
+    last_dot = file.filename.rfind('.')
+    extension = file.filename[last_dot:] if last_dot != -1 else ''
     file_hash = hash_file_contents(file)
     file_path = os.path.join(UPLOAD_FOLDER, file_hash[:2], file_hash + extension)
 
+    # Проверка существования файла
     if not exist_file_by_prefix(os.path.join(UPLOAD_FOLDER, \
                                                   file_hash[:2]), file_hash):
         subdir = os.path.join(UPLOAD_FOLDER, file_hash[:2])
@@ -42,6 +42,7 @@ def upload_file():
             os.remove(file_path)
             return jsonify({'error': 'An error occurred while adding the file'})
     else:
+        # Проверка на наличие такого же файла у пользователя
         if not auth.current_user() in db.get_users_by_hash(file_hash):
             try:
                 db.upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash))
@@ -59,11 +60,10 @@ def delete_file():
     
     if not file_path is None:
         users = db.get_users_by_hash(hash_to_delete)
-        print(users)
         if  auth.current_user() in users:
             try:
                 db.delete_metadata(Metadata(username=auth.current_user(), file_hash=hash_to_delete))
-                if len(users) == 1:
+                if len(users) == 1: # Если это был последний пользователь для файла
                     os.remove(file_path)
                 return jsonify({'message': 'File deleted successfully'})
             except:
