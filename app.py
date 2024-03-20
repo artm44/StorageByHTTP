@@ -1,6 +1,6 @@
 from flask import Flask, request, send_from_directory, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
-import os
+
 from file_utils import *
 from auth_utils import auth
 from database import Metadata, MetadataDB, my_db
@@ -11,14 +11,13 @@ db = MetadataDB(my_db, app)
 
 UPLOAD_FOLDER = 'store'
 
-SWAGGER_URL = '/swagger'  # URL for exposing Swagger UI (without trailing '/')
+SWAGGER_URL = '/swagger'  # URL for exposing Swagger UI
 API_URL = '/static/swagger.json'
 
-# Call factory function to create our blueprint
 swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,  # Swagger UI static files will be mapped to '{SWAGGER_URL}/dist/'
+    SWAGGER_URL,
     API_URL,
-    config={  # Swagger UI config overrides
+    config={
         'app_name': "StorageByHTTP"
     }
 )
@@ -75,10 +74,14 @@ def upload_file():
 @auth.login_required
 def delete_file():
     hash_to_delete = request.args.get('hash')
+
+    if not allowed_hash(hash_to_delete):
+        return jsonify({'error': 'Bad hash'})
+
     file_path = find_file_by_prefix(os.path.join(UPLOAD_FOLDER,
                                                  hash_to_delete[:2]), hash_to_delete)
 
-    if not file_path is None:
+    if file_path is not None:
         users = db.get_users_by_hash(hash_to_delete)
         if auth.current_user() in users:
             try:
@@ -97,11 +100,14 @@ def delete_file():
 @app.route('/download', methods=['GET'])
 def download_file():
     hash_to_download = request.args.get('hash')
-    file_path = find_file_by_prefix(os.path.join(UPLOAD_FOLDER, \
+    if not allowed_hash(hash_to_download):
+        return jsonify({'error': 'Bad hash'})
+
+    file_path = find_file_by_prefix(os.path.join(UPLOAD_FOLDER,
                                                  hash_to_download[:2]), hash_to_download)
 
-    if not file_path is None:
-        return send_from_directory(os.path.dirname(file_path), os.path.basename(file_path), \
+    if file_path is not None:
+        return send_from_directory(os.path.dirname(file_path), os.path.basename(file_path),
                                    as_attachment=True)  # Возвращает файл для загрузки
     else:
         return jsonify({'error': 'File not found'})
