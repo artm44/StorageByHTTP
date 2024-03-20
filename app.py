@@ -2,12 +2,14 @@ from flask import Flask, request, send_from_directory, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
 
 from file_utils import *
-from auth_utils import auth
-from database import Metadata, MetadataDB, my_db
+from auth_utils import auth_system
+from database import Metadata, User, StorageDB, my_db
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///metadata.db'
-db = MetadataDB(my_db, app)
+db = StorageDB(my_db, app)
+auth_system.set_db(db)
+auth = auth_system.auth
 
 UPLOAD_FOLDER = 'store'
 
@@ -28,6 +30,25 @@ app.register_blueprint(swaggerui_blueprint)
 @app.route('/static/<path:path>')
 def send_static(path):
     return send_from_directory('static', path)
+
+
+@app.route('/register', methods=['POST'])
+def register_user():
+    try:
+        username = request.args.get('username')
+        password = request.args.get('password')
+    except KeyError:
+        return jsonify({'error': 'Not enough data'})
+
+    if db.read_user_by_username(username) is not None:
+        return jsonify({'error': 'Already there is user with this username'})
+
+    try:
+        db.upload_user(User(username=username, password=password))
+    except:
+        return jsonify({'error': 'An error occurred while adding the file'})
+
+    return jsonify({'message': 'success registration'})
 
 
 @app.route('/upload', methods=['POST'])
@@ -99,7 +120,11 @@ def delete_file():
 
 @app.route('/download', methods=['GET'])
 def download_file():
-    hash_to_download = request.args.get('hash')
+    try:
+        hash_to_download = request.args.get('hash')
+    except KeyError:
+        return jsonify({'error': 'No hash'})
+
     if not allowed_hash(hash_to_download):
         return jsonify({'error': 'Bad hash'})
 

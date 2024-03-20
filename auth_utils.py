@@ -1,16 +1,23 @@
 from flask_httpauth import HTTPBasicAuth
 
-auth = HTTPBasicAuth()
 
-# Примеры "базы данных" пользователей и их паролей
-users = {
-    "user1": "password1",
-    "user2": "password2"
-}
+class MyBasicAuth:
+    def __init__(self):
+        self.auth = HTTPBasicAuth()
+        self.db = None
+
+    def set_db(self, db):
+        self.db = db
 
 
-@auth.verify_password
+auth_system = MyBasicAuth()
+
+
+@auth_system.auth.verify_password
 def verify_password(username, password):
     """ Функция проверки аутентификации пользователя """
-    if username in users and users.get(username) == password:
+    result = auth_system.db.read_user_by_username(username)
+    if result is None:
+        return None
+    if result.password == password:
         return username

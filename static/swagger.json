@@ -3,7 +3,7 @@
   "info": {
     "title": "StorageByHTTP",
     "description": "This is a sample storage file using HTTP Service based on the OpenAPI 3.0 specification.\n",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "servers": [
     {
@@ -21,9 +21,73 @@
   "tags": [
     {
       "name": "File"
+    },
+    {
+      "name": "User"
     }
   ],
   "paths": {
+    "/register": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "description": "Register user.",
+        "operationId": "users_register",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Username"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Password"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Register successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/upload": {
       "post": {
         "tags": [
@@ -64,7 +128,7 @@
                       "type": "string"
                     }
                   },
-                  "example": "031edd7d41651593c5fe5c006fa5752b37fddff7bc4e843aa6af0c950f4b9406"
+                  "example": "123456789abcdef"
                 }
               }
             }
