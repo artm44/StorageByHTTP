@@ -1,2 +1,4 @@
 store/
+instance/
+myenv/
 __pycache__/
