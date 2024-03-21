@@ -7,6 +7,7 @@ from database import Metadata, User, StorageDB, my_db
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///metadata.db'
+
 db = StorageDB(my_db, app)
 auth_system.set_db(db)
 auth = auth_system.auth
@@ -43,10 +44,8 @@ def register_user():
     if db.read_user_by_username(username) is not None:
         return jsonify({'error': 'Already there is user with this username'})
 
-    try:
-        db.upload_user(User(username=username, password=password))
-    except:
-        return jsonify({'error': 'An error occurred while adding the file'})
+    if not db.upload_user(User(username=username, password=password)):
+        return jsonify({'error': 'An error occurred while registration'})
 
     return jsonify({'message': 'success registration'})
 
@@ -71,21 +70,15 @@ def upload_file():
 
     # Проверка существования файла
     if not exist_file_by_prefix(os.path.join(UPLOAD_FOLDER, file_hash[:2]), file_hash):
+        if not db.upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash)):
+            return jsonify({'error': 'An error occurred while adding the file'})
         subdir = os.path.join(UPLOAD_FOLDER, file_hash[:2])
         os.makedirs(subdir, exist_ok=True)
         file.save(file_path)
-
-        try:
-            db.upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash))
-        except:
-            os.remove(file_path)
-            return jsonify({'error': 'An error occurred while adding the file'})
     else:
         # Проверка на наличие такого же файла у пользователя
         if not auth.current_user() in db.get_users_by_hash(file_hash):
-            try:
-                db.upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash))
-            except:
+            if not db.upload_metadata(Metadata(username=auth.current_user(), file_hash=file_hash)):
                 return jsonify({'error': 'An error occurred while adding the file'})
 
     return jsonify({'hash': file_hash})
@@ -105,12 +98,11 @@ def delete_file():
     if file_path is not None:
         users = db.get_users_by_hash(hash_to_delete)
         if auth.current_user() in users:
-            try:
-                db.delete_metadata(Metadata(username=auth.current_user(), file_hash=hash_to_delete))
+            if db.delete_metadata(Metadata(username=auth.current_user(), file_hash=hash_to_delete)):
                 if len(users) == 1:  # Если это был последний пользователь для файла
                     os.remove(file_path)
                 return jsonify({'message': 'File deleted successfully'})
-            except:
+            else:
                 return jsonify({'error': 'An error occurred while deleting the file'})
         else:
             return jsonify({'error': 'You can\'t delete this file'})
