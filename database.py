@@ -95,7 +95,7 @@ class StorageDB:
         result = self.db.session.query(User).filter(User.username == username).first()
         return result
 
-    def get_users_by_hash(self, file_hash: str) -> []:
+    def get_users_by_hash(self, file_hash: str) -> [str]:
         """ Метод возвращающий всех пользователей, у которые являются владельцами файла """
         result = self.db.session.query(Metadata).filter(Metadata.file_hash == file_hash).all()
         if result is None:

@@ -50,6 +50,15 @@ def register_user():
     return jsonify({'message': 'success registration'})
 
 
+@app.route('/unsubscribe', methods=['DELETE'])
+@auth.login_required
+def delete_user():
+    user: User = db.read_user_by_username(auth.current_user())
+    if not db.delete_user(user):
+        return jsonify({'error': 'An error occurred while delete user'})
+    return jsonify({'message': 'success'})
+
+
 @app.route('/upload', methods=['POST'])
 @auth.login_required
 def upload_file():
