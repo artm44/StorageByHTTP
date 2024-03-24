@@ -3,7 +3,7 @@
   "info": {
     "title": "StorageByHTTP",
     "description": "This is a sample storage file using HTTP Service based on the OpenAPI 3.0 specification.\n",
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "servers": [
     {
@@ -27,7 +27,7 @@
     }
   ],
   "paths": {
-    "/register": {
+    "/users/register": {
       "post": {
         "tags": [
           "User"
@@ -88,7 +88,7 @@
         }
       }
     },
-    "/unsubscribe": {
+    "/users/unsubscribe": {
       "delete": {
         "tags": [
           "User"
@@ -149,7 +149,7 @@
         }
       }
     },
-    "/upload": {
+    "/files/upload": {
       "post": {
         "tags": [
           "File"
@@ -227,7 +227,7 @@
         }
       }
     },
-    "/delete": {
+    "/files/delete": {
       "delete": {
         "tags": [
           "File"
@@ -299,7 +299,7 @@
         }
       }
     },
-    "/download": {
+    "/files/download": {
       "get": {
         "tags": [
           "File"
@@ -331,6 +331,21 @@
           },
           "400": {
             "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {

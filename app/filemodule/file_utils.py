@@ -28,7 +28,7 @@ def allowed_hash(hash_value: str) -> bool:
     return True
 
 
-def find_file_by_prefix(directory: str, prefix: str) -> str:
+def find_file_by_prefix(directory: str, prefix: str) -> str | None:
     """ Функция поиска файла по хэшу """
     if not os.path.isdir(directory):
         return None
